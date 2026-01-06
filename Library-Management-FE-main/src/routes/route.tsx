@@ -9,7 +9,6 @@ import { config } from "../config";
 import { BooksList } from "../books/components/BooksList";
 import { BookSingle } from "../books/components/BookSingle";
 import UserProfile from "../user/components/UserProfile";
-import MyLoans from "../user/components/MyLoans";
 
 export const router = createBrowserRouter([
     {
@@ -33,10 +32,6 @@ export const router = createBrowserRouter([
                 path: "*", 
                 element: <Navigate to="/" replace /> 
             }, 
-            {
-                path: "/my-loans",
-                element: <MyLoans />,
-            },
         ]
 
     }

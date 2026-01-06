@@ -61,6 +61,8 @@ router.get(
  *                   type: string
  *                password:
  *                   type: string
+ *                confirmPassword:
+ *                   type: string
  *      response:
  *        201:
  *           description: Successful response

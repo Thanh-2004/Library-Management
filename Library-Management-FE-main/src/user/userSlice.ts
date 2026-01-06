@@ -16,6 +16,18 @@ interface UserInitialState {
     history: History[]
 }
 
+const storedToken = localStorage.getItem("token");
+
+// const initialState : UserInitialState = {
+//     user : null,
+//     // Nếu có token trong localStorage thì nạp vào ngay
+//     token: storedToken,
+//     // Nếu có token thì coi như đã đăng nhập
+//     isLoggedIn: !!storedToken, 
+//     isLoading : false,
+//     history : []
+// }
+
 const initialState : UserInitialState = {
     user : null,
     token: null,
@@ -33,6 +45,7 @@ export const fetchToken = createAsyncThunk(
                     `${config.dataAPI}users/signin`,                   
                     { "email" : email, "password" : password }
                 )
+            localStorage.setItem("token", data.accessToken);
             return data          
         } catch(e) {
             const error = e as Error
@@ -114,7 +127,7 @@ export const returnBook = createAsyncThunk(
 
 export const createUser = createAsyncThunk(
     'createUser',
-    async ({ firstName, lastName, email, password, avatar, phoneNumber, address } : CreateUser, { rejectWithValue }) => {
+    async ({ firstName, lastName, email, password, confirmPassword, avatar, phoneNumber, address } : CreateUser, { rejectWithValue }) => {
         try {
             const { data } = await axios.post(
                 `${config.dataAPI}users/signup`,
@@ -125,9 +138,13 @@ export const createUser = createAsyncThunk(
                     "address" : address,
                     "phoneNumber": phoneNumber,
                     "password" : password,
+                    "confirmPassword": confirmPassword,
                     "avatar" : avatar
                 }
             )
+            if (data.accessToken) {
+                localStorage.setItem("token", data.accessToken);
+            }
             return data
         } catch(e) {
             const error = e as Error
@@ -144,6 +161,7 @@ const userSlice = createSlice({
             state.isLoggedIn = false
             state.user = null
             state.token = null
+            localStorage.removeItem("token");
         }
     },
     extraReducers(builder) {

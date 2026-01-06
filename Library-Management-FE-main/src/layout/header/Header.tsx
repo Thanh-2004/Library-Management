@@ -137,6 +137,7 @@ export const Header = () => {
             phoneNumber : (data.get('phoneNumber') as FormDataEntryValue).toString(),
             email : (data.get('email') as FormDataEntryValue).toString(),
             password : (data.get('password') as FormDataEntryValue).toString(),
+            confirmPassword : (data.get('confirmPassword') as FormDataEntryValue).toString(),
             avatar : `https://placehold.co/400` 
         }
         await dispatch(createUser(submitData));
@@ -366,7 +367,16 @@ export const Header = () => {
                                                             type="password"
                                                             id="password"
                                                             autoComplete="current-password"
-                                                        />                                                        
+                                                        />                                 
+                                                        <TextField
+                                                            margin="normal"
+                                                            required
+                                                            fullWidth
+                                                            name="confirmPassword" // Quan trọng: name phải khớp với data.get('confirmPassword')
+                                                            label="Confirm Password"
+                                                            type="password"
+                                                            id="confirmPassword"
+                                                        />                       
                                                         <Button
                                                             type="submit"
                                                             fullWidth

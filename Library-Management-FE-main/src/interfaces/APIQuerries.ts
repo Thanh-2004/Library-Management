@@ -26,6 +26,7 @@ export interface CreateUser {
     phoneNumber: string,
     email : string,
     password : string,
+    confirmPassword: string,
     avatar : string
 }
 

@@ -19,7 +19,6 @@ import crudStatsRoutes from './routes/crudStatsRoutes.js'
 import permissionsRoutes from './routes/permissionsRoutes.js'
 import rolesRoutes from './routes/rolesRoutes.js'
 import usersRoutes from './routes/usersRoutes.js'
-import loansRoutes from "./routes/loansRoutes.js";
 import { swaggerSpec } from './utils/swagger.js'
 
 const app = express()
@@ -30,8 +29,8 @@ app.use(cors())
 // Middleware
 app.use(express.json())
 app.use(loggingMiddleware)
-app.use(entitiesMonitorMiddleware)
-app.use(crudCounterMiddleware)
+// app.use(entitiesMonitorMiddleware)
+// app.use(crudCounterMiddleware)
 
 // Google login
 /*
@@ -56,7 +55,6 @@ app.use('/api/v1/permissions', permissionsRoutes)
 app.use('/api/v1/book-author', bookAuthorRoutes)
 app.use('/api/v1/cart', cartRoutes)
 app.use('/api/v1/carts', cartsRoutes)
-app.use("/api/v1/loans", loansRoutes);
 app.use('/api/v1/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 // Error Handler

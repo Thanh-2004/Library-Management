@@ -5,7 +5,6 @@ import { useAppSelector } from "../../customHooks/useAppSelector";
 import { useAppDispatch } from "../../customHooks/useAppDispatch"
 import { increaseCount } from "../../cart/cartSlice";
 
-import { borrowBook, resetBorrowStatus } from "../../loans/loansSlice";
 
 import { 
     Card, 
@@ -50,7 +49,6 @@ export const BookSingle = () => {
     const userRole = user ? user.role[0].title : "Borrower"    
     const categories = useAppSelector(categoriesSelector.selectAll)
     const availableCopies = useAppSelector(getSingleBookCopies)
-    const { borrowSuccess, error: loanError } = useAppSelector((state) => state.loans);
 
     useEffect(() => {
         if (ISBN !== undefined) {
@@ -87,20 +85,6 @@ export const BookSingle = () => {
     defaultDate.setDate(defaultDate.getDate() + 14);
     const [dueDate, setDueDate] = useState<string>(defaultDate.toISOString().split('T')[0]);
     const [openSnack, setOpenSnack] = useState(false);
-
-    const handleBorrow = () => {
-        if (!_id) return;
-        dispatch(borrowBook({ 
-            bookId: _id, 
-            dueDate: new Date(dueDate).toISOString() 
-        }));
-        setOpenSnack(true);
-    };
-
-    const handleCloseSnack = () => {
-        setOpenSnack(false);
-        dispatch(resetBorrowStatus());
-    };
 
     return (    
         <Box
@@ -188,34 +172,6 @@ export const BookSingle = () => {
                     )}
                 </CardActions>
             </Card>
-            <Box sx={{ marginTop: 3, padding: 2, border: '1px dashed grey', borderRadius: 2 }}>
-                <Typography variant="h6" gutterBottom>Borrow this Book</Typography>
-                <TextField
-                    label="Due Date"
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    sx={{ width: 220, marginRight: 2 }}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                />
-                <Button 
-                    variant="contained" 
-                    color="secondary" 
-                    onClick={handleBorrow}
-                    sx={{ height: '56px' }}
-                >
-                    Borrow Now
-                </Button>
-            </Box>
-
-            {/* Thêm Snackbar để thông báo kết quả */}
-            <Snackbar open={openSnack} autoHideDuration={6000} onClose={handleCloseSnack}>
-                <Alert onClose={handleCloseSnack} severity={loanError ? "error" : "success"} sx={{ width: '100%' }}>
-                    {loanError ? loanError : "Borrow request submitted successfully!"}
-                </Alert>
-            </Snackbar>
             { userRole === "Admin" &&
                 <Modal
                     open={openModal}
