@@ -58,6 +58,32 @@ export const fetchSingleBook = createAsyncThunk(
     }
 )
 
+export const createNewBook = createAsyncThunk(
+    'books/createNewBook',
+    async (bookData: any, { rejectWithValue }) => {
+        try {
+            // Lấy token từ localStorage để chứng thực Admin
+            const token = localStorage.getItem("token");
+            
+            // Gọi API POST /books với dữ liệu JSON
+            const { data } = await axios.post(
+                `${config.dataAPI}books`, 
+                bookData,
+                {
+                    headers: {
+                        // Backend yêu cầu token ở header này
+                        "Authorization": `Bearer ${token}` 
+                    }
+                }
+            )
+            return data
+        } catch (e: any) {
+            // Xử lý lỗi trả về từ Backend (nếu có)
+            return rejectWithValue(e.response?.data?.message || e.message)
+        }
+    }
+)
+
 const bookSlice = createSlice({
     name: 'books',
     initialState,
@@ -102,6 +128,21 @@ const bookSlice = createSlice({
                 if (action.payload instanceof Error){
                     state.isLoading = false
                     state.error = action.payload.message
+                }
+            })
+
+            .addCase(createNewBook.pending, (state) => {
+            state.isLoading = true;
+            })
+            .addCase(createNewBook.fulfilled, (state, action) => {
+                state.isLoading = false;
+                // Tùy chọn: Bạn có thể thêm sách mới vào danh sách ngay lập tức nếu muốn
+                booksAdapter.addOne(state, action.payload);
+            })
+            .addCase(createNewBook.rejected, (state, action) => {
+                state.isLoading = false;
+                if (action.payload) {
+                    state.error = action.payload as string;
                 }
             })
     },

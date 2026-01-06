@@ -16,6 +16,10 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add"
 
+import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
+import { fetchAuthors, createAuthor } from '../../authors/authorSlice'; // Import từ slice của bạn
+import { useSelector } from 'react-redux';
+
 import { useAppDispatch } from "../../customHooks/useAppDispatch";
 import { useAppSelector } from "../../customHooks/useAppSelector";
 
@@ -26,10 +30,11 @@ import { increaseCount } from "../../cart/cartSlice";
 import { getUser } from "../../user/userSlice";
 import { config } from "../../config";
 import { Book } from "../../interfaces/Book";
-import { bookSelector, getTotalEntries, getTotalPageNumber, fetchBooksFilteredAndPaginated } from "../bookSlice";
+import { bookSelector, getTotalEntries, getTotalPageNumber, fetchBooksFilteredAndPaginated, createNewBook} from "../bookSlice";
 import { BookFilter } from "./BookFilters";
 import { categoriesSelector } from "../../categories/categorySlice";
 import { Category } from "../../interfaces/Category";
+
 
 export const BooksList = () => {
     const [currentPageNumber, setCurrentPageNumber] = useState(1);
@@ -84,7 +89,10 @@ export const BooksList = () => {
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        // const data = new FormData(event.currentTarget);
+        const data = new FormData(event.currentTarget);
+        const rawISBN = (data.get('ISBN') as FormDataEntryValue).toString();
+        // Regex này sẽ xóa tất cả dấu gạch ngang (-) và khoảng trắng, chỉ giữ lại số
+        const cleanISBN = rawISBN.replace(/[^0-9]/g, "");
         // const submitData = {
         //     title : (data.get('title') as FormDataEntryValue).toString(),
         //     description : (data.get('description') as FormDataEntryValue).toString(),
@@ -93,8 +101,32 @@ export const BooksList = () => {
         //     images : ['https://placehold.co/400']
         // }
         // await dispatch(createProduct(submitData));
+        const submitData = {
+            title: (data.get('title') as FormDataEntryValue).toString(),
+            description: (data.get('description') as FormDataEntryValue).toString(),
+            // Lấy thêm các trường mới
+            ISBN: cleanISBN,
+            publisher: (data.get('publisher') as FormDataEntryValue).toString(),
+            edition: (data.get('edition') as FormDataEntryValue).toString(),
+            
+            // Category: Lấy ID từ Select
+            category: (data.get('category') as FormDataEntryValue).toString(),
+
+            // Author: Backend cần mảng ID ["id1"], tạm thời nhập thủ công 1 ID
+            author: [(data.get('authorId') as FormDataEntryValue).toString()],
+            
+            // Hardcode ảnh và trạng thái để test
+            img: 'https://placehold.co/400', 
+            // Nếu cần pages và publishedDate thì thêm vào đây
+        };
+
+        console.log("Submit Data:", submitData); // Debug xem đủ chưa
+        
+        await dispatch(createNewBook(submitData)); 
+        
         handleCloseModal();
     }
+
 
     return (
         <Box
@@ -273,6 +305,42 @@ export const BooksList = () => {
                                     label="Description"
                                     id="description"
                                 /> 
+                                <TextField
+                                    margin="normal"
+                                    required
+                                    fullWidth
+                                    id="ISBN"
+                                    label="ISBN (10 or 13 digits)"
+                                    name="ISBN" 
+                                />
+                                <TextField
+                                    margin="normal"
+                                    required
+                                    fullWidth
+                                    id="publisher"
+                                    label="Publisher"
+                                    name="publisher" 
+                                />
+
+                                <TextField
+                                    margin="normal"
+                                    required
+                                    fullWidth
+                                    id="edition"
+                                    label="Edition"
+                                    name="edition" 
+                                />
+
+                                <TextField
+                                    margin="normal"
+                                    required
+                                    fullWidth
+                                    id="authorId"
+                                    label="Author ID"
+                                    name="authorId" 
+                                    helperText="Nhập ID của tác giả (VD: 655...)"
+                                />
+
                                 <Button
                                     type="submit"
                                     fullWidth
