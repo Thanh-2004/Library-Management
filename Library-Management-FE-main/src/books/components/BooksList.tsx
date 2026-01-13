@@ -32,6 +32,23 @@ import { BookFilter } from "./BookFilters";
 import { categoriesSelector } from "../../categories/categorySlice";
 import { Category } from "../../interfaces/Category";
 
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { styled } from '@mui/material/styles'; 
+import axios from 'axios'; 
+
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
+
 
 export const BooksList = () => {
     const [currentPageNumber, setCurrentPageNumber] = useState(1);
@@ -55,6 +72,9 @@ export const BooksList = () => {
     const categories = useAppSelector(categoriesSelector.selectAll);
 
     const dispatch = useAppDispatch()
+
+    const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         handleFilterChange()
@@ -83,6 +103,30 @@ export const BooksList = () => {
     const handleFilterChange = () => {
         setCurrentPageNumber(1)
     }
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('image', file); // 'image' phải trùng với tên trong backend uploadMiddleware.single('image')
+
+        try {
+            // Gọi API upload bạn vừa tạo ở Backend
+            const response = await axios.post(`${config.dataAPI}upload`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            
+            // Lưu URL nhận được vào state
+            setUploadedImageUrl(response.data.url);
+        } catch (error) {
+            console.error("Upload failed", error);
+            alert("Upload ảnh thất bại!");
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -115,7 +159,7 @@ export const BooksList = () => {
             quantity: Number(data.get('quantity') || 1),
             
             // Hardcode ảnh và trạng thái để test
-            img: 'https://placehold.co/400', 
+            img: uploadedImageUrl || 'https://placehold.co/400',
             // Nếu cần pages và publishedDate thì thêm vào đây
         };
         dispatch(fetchBooksFilteredAndPaginated({ 
@@ -125,6 +169,7 @@ export const BooksList = () => {
         console.log("Submit Data:", submitData); // Debug xem đủ chưa
         try {
             await dispatch(createNewBook(submitData)).unwrap();
+            setUploadedImageUrl("");
             
             // QUAN TRỌNG: Phải fetch lại danh sách ngay để Backend tính toán lại availableCopies
             dispatch(fetchBooksFilteredAndPaginated({ 
@@ -136,6 +181,7 @@ export const BooksList = () => {
         } catch (error: any) {
             alert("Error: " + error);
         }
+
         
         handleCloseModal();
     }
@@ -364,6 +410,22 @@ export const BooksList = () => {
                                     InputProps={{ inputProps: { min: 1 } }} // Tối thiểu là 1 cuốn
                                     defaultValue={1}
                                 />
+                                <Box sx={{ mt: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Button
+                                        component="label"
+                                        variant="contained"
+                                        startIcon={<CloudUploadIcon />}
+                                        disabled={isUploading}
+                                    >
+                                        {isUploading ? "Uploading..." : "Upload Book Cover"}
+                                        <VisuallyHiddenInput type="file" onChange={handleFileUpload} accept="image/*" />
+                                    </Button>
+                                    
+                                    {/* Hiển thị ảnh preview nhỏ bên cạnh nếu đã upload */}
+                                    {uploadedImageUrl && (
+                                        <img src={uploadedImageUrl} alt="Preview" style={{ height: 50, borderRadius: 4 }} />
+                                    )}
+                                </Box>
 
                                 <Button
                                     type="submit"

@@ -1,3 +1,5 @@
+import 'dotenv/config'
+
 import cors from 'cors'
 import express from 'express'
 import passport from 'passport'
@@ -20,6 +22,7 @@ import permissionsRoutes from './routes/permissionsRoutes.js'
 import rolesRoutes from './routes/rolesRoutes.js'
 import usersRoutes from './routes/usersRoutes.js'
 import { swaggerSpec } from './utils/swagger.js'
+import uploadRoutes from './routes/uploadRoutes.js';
 
 const app = express()
 
@@ -55,6 +58,7 @@ app.use('/api/v1/permissions', permissionsRoutes)
 app.use('/api/v1/book-author', bookAuthorRoutes)
 app.use('/api/v1/cart', cartRoutes)
 app.use('/api/v1/carts', cartsRoutes)
+app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 // Error Handler
