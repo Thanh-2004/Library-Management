@@ -137,7 +137,7 @@ const bookSlice = createSlice({
             .addCase(createNewBook.fulfilled, (state, action) => {
                 state.isLoading = false;
                 // Tùy chọn: Bạn có thể thêm sách mới vào danh sách ngay lập tức nếu muốn
-                booksAdapter.addOne(state, action.payload);
+                // booksAdapter.addOne(state, action.payload);
             })
             .addCase(createNewBook.rejected, (state, action) => {
                 state.isLoading = false;
@@ -147,6 +147,21 @@ const bookSlice = createSlice({
             })
     },
 })
+
+export const deleteBook = createAsyncThunk(
+    'books/deleteBook',
+    async (bookId: string, { rejectWithValue }) => {
+        try {
+            const token = localStorage.getItem("token");
+            await axios.delete(`${config.dataAPI}books/${bookId}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            return bookId;
+        } catch (e: any) {
+            return rejectWithValue(e.message);
+        }
+    }
+);
 
 // Selector
 export const bookSelector = booksAdapter.getSelectors((state: RootState) => state.books)

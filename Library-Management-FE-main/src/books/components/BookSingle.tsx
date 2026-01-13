@@ -35,6 +35,7 @@ import { getUser } from "../../user/userSlice";
 import { fetchSingleBook, getSingleBook, getSingleBookCopies } from "../bookSlice";
 import { categoriesSelector, fetchCategories } from "../../categories/categorySlice";
 import { Book, SingleBook } from "../../interfaces/Book";
+import { deleteBook } from "../bookSlice";
 import { Category } from "../../interfaces/Category";
 
 export const BookSingle = () => {
@@ -134,9 +135,19 @@ export const BookSingle = () => {
                                 marginLeft: "auto"
                             }}
                             aria-label="Delete book"
-                            onClick={() => {
-                                //dispatch(deletebook(parseInt(_id as string)));
-                                navigate("..")
+                            // onClick={() => {
+                            //     //dispatch(deletebook(parseInt(_id as string)));
+                            //     navigate("..")
+                            // }}
+                            onClick={async () => {
+                                if (_id) {
+                                    // Xác nhận trước khi xóa (Optional nhưng nên làm)
+                                    if (window.confirm("Are you sure you want to delete this book?")) {
+                                        // Gọi action xóa với ID dạng string (BỎ parseInt đi)
+                                        await dispatch(deleteBook(_id));
+                                        navigate(".."); // Quay lại trang danh sách sau khi xóa xong
+                                    }
+                                }
                             }}
                         >
                             <DeleteIcon />

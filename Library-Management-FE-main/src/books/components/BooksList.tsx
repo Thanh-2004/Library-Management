@@ -16,9 +16,6 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add"
 
-import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
-import { fetchAuthors, createAuthor } from '../../authors/authorSlice'; // Import từ slice của bạn
-import { useSelector } from 'react-redux';
 
 import { useAppDispatch } from "../../customHooks/useAppDispatch";
 import { useAppSelector } from "../../customHooks/useAppSelector";
@@ -114,15 +111,31 @@ export const BooksList = () => {
 
             // Author: Backend cần mảng ID ["id1"], tạm thời nhập thủ công 1 ID
             author: [(data.get('authorId') as FormDataEntryValue).toString()],
+
+            quantity: Number(data.get('quantity') || 1),
             
             // Hardcode ảnh và trạng thái để test
             img: 'https://placehold.co/400', 
             // Nếu cần pages và publishedDate thì thêm vào đây
         };
+        dispatch(fetchBooksFilteredAndPaginated({ 
+                page: 1, perPage: 10, searchQuery: '', sortBy: 'title', sortOrder: 'asc' 
+        }));
 
         console.log("Submit Data:", submitData); // Debug xem đủ chưa
-        
-        await dispatch(createNewBook(submitData)); 
+        try {
+            await dispatch(createNewBook(submitData)).unwrap();
+            
+            // QUAN TRỌNG: Phải fetch lại danh sách ngay để Backend tính toán lại availableCopies
+            dispatch(fetchBooksFilteredAndPaginated({ 
+                page: 1, perPage: 10, searchQuery: '', sortBy: 'title', sortOrder: 'asc' 
+            }));
+            
+            handleCloseModal();
+            alert("Create New Book successfully!");
+        } catch (error: any) {
+            alert("Error: " + error);
+        }
         
         handleCloseModal();
     }
@@ -336,9 +349,20 @@ export const BooksList = () => {
                                     required
                                     fullWidth
                                     id="authorId"
-                                    label="Author ID"
+                                    label="Author"
                                     name="authorId" 
-                                    helperText="Nhập ID của tác giả (VD: 655...)"
+                                    helperText="Nhập tên tác giả"
+                                />
+                                <TextField
+                                    margin="normal"
+                                    required
+                                    fullWidth
+                                    id="quantity"
+                                    label="Total Copies (Số lượng sách)"
+                                    name="quantity"
+                                    type="number" // Bắt buộc là số
+                                    InputProps={{ inputProps: { min: 1 } }} // Tối thiểu là 1 cuốn
+                                    defaultValue={1}
                                 />
 
                                 <Button

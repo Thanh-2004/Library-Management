@@ -14,6 +14,7 @@ import {
 } from '../types/Book.js'
 import { type PaginatedData, type AtleastOne } from '../types/AdditionalType.js'
 import UserRepo from '../models/usersModel.js'
+import AuthorRepo from '../models/authorsModel.js'
 
 const populatingAuthor = {
   $lookup: {
@@ -249,17 +250,85 @@ const getCopiesByBookId = async (bookId: string): Promise<BookCopy[]> => {
   return books as BookCopy[]
 }
 
-const createOne = async (
-  payload: AtleastOne<Book, 'ISBN'>
-): Promise<Book | undefined> => {
-  const newBook = new BooksRepo(payload)
-  const result = await newBook.save()
+// const createOne = async (
+//   payload: AtleastOne<Book, 'ISBN'>
+// ): Promise<Book | undefined> => {
+//   const newBook = new BooksRepo(payload)
+//   const result = await newBook.save()
 
-  if (result !== undefined) {
-    await createOneCopy(result.id)
+//   if (result !== undefined) {
+//     await createOneCopy(result.id)
+//   }
+
+//   return result as Book | undefined
+// }
+
+const createOne = async (
+  payload: any // Payload lúc này chứa mảng tên tác giả (string[])
+): Promise<Book | undefined> => {
+  
+  // 1. Xử lý danh sách tác giả
+  const authorIds: Types.ObjectId[] = [];
+  
+  if (payload.author && Array.isArray(payload.author)) {
+    for (const fullName of payload.author) {
+      // Giả sử tên nhập vào là "Nguyễn Nhật Ánh"
+      // Cần tách ra firstName và lastName vì Database lưu riêng
+      const nameParts = fullName.trim().split(' ');
+      let lastName = '';
+      let firstName = '';
+
+      if (nameParts.length > 1) {
+        lastName = nameParts.pop() || ''; // Lấy từ cuối cùng làm lastName
+        firstName = nameParts.join(' ');  // Các từ còn lại là firstName
+      } else {
+        firstName = nameParts[0]; // Trường hợp nhập 1 từ
+      }
+
+      // Tìm xem tác giả đã có chưa
+      let author = await AuthorRepo.findOne({ 
+        firstName: new RegExp(`^${firstName}$`, 'i'), // regex 'i' để không phân biệt hoa thường
+        lastName: new RegExp(`^${lastName}$`, 'i') 
+      });
+
+      // Nếu chưa có thì tạo mới
+      if (!author) {
+        author = await AuthorRepo.create({
+          firstName,
+          lastName,
+          image: '', // Mặc định hoặc xử lý thêm nếu cần
+          books: []
+        });
+      }
+
+      // Đẩy ID vào mảng kết quả
+      if (author) {
+        authorIds.push(author._id);
+      }
+    }
   }
 
-  return result as Book | undefined
+  // 2. Thay thế mảng tên bằng mảng ID vào payload
+  const finalPayload = {
+    ...payload,
+    author: authorIds
+  };
+
+  // 3. Tạo sách như bình thường
+  const newBook = new BooksRepo(finalPayload);
+  const result = await newBook.save();
+
+  if (result !== undefined) {
+    // Cập nhật lại mảng sách cho từng tác giả (Optional nhưng nên làm)
+    await AuthorRepo.updateMany(
+      { _id: { $in: authorIds } },
+      { $push: { books: result._id } }
+    );
+    
+    await createOneCopy(result.id);
+  }
+
+  return result as Book | undefined;
 }
 
 const createOneCopy = async (bookId: string): Promise<BookCopy | undefined> => {

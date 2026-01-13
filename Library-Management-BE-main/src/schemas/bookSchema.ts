@@ -83,15 +83,17 @@ export const booksSchema = z
     description: z.string().default(''),
     publisher: z.string().default(''),
     img: z.string().url().min(1).default('https://placehold.co/600x400'),
-    author: z
-      .array(
-        z
-          .string()
-          .min(1)
-          .transform((val) => new mongoose.Types.ObjectId(val))
-      )
-      .min(1)
-      .default([]),
+    // author: z
+    //   .array(
+    //     z
+    //       .string()
+    //       .min(1)
+    //       .transform((val) => new mongoose.Types.ObjectId(val))
+    //   )
+    //   .min(1)
+    //   .default([]),
+    author: z.array(z.string().min(1)).min(1).default([]),
+    quantity: z.number().int().min(1).optional().default(1),
   })
   .strict()
 
